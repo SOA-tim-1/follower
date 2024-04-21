@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"follower/handler"
 	"follower/model"
 	"follower/repo"
+	"follower/service"
 	"log"
 	"net/http"
 	"os"
@@ -32,10 +34,13 @@ func initializeNeo4j(ctx context.Context) (neo4j.DriverWithContext, error) {
 	return driver, nil
 }
 
-func startServer() {
+func startServer(userHandler *handler.UserHandler) {
 	router := mux.NewRouter().StrictSlash(true)
 
-	// router.HandleFunc("/user", userHandler.Create).Methods("POST")
+	router.HandleFunc("/follower/get-follows/{id}", userHandler.GetFollows).Methods("GET")
+	router.HandleFunc("/follower/get-followers/{id}", userHandler.GetFollowers).Methods("GET")
+	router.HandleFunc("/follower/get-suggestions/{id}", userHandler.GetSuggestionsForUser).Methods("GET")
+	router.HandleFunc("/follower/follow-connection", userHandler.CreateFollowConnection).Methods("POST")
 
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./static")))
 
@@ -67,10 +72,69 @@ func New(logger *log.Logger) (*repo.UserRepository, error) {
 	}, nil
 }
 
+func initDatabase(store repo.UserRepository) {
+	store.DropAll()
+
+	var user1 = model.User{ID: 105}
+	err := store.WriteUser(&user1)
+
+	var user2 = model.User{ID: 106}
+	err = store.WriteUser(&user2)
+
+	var user3 = model.User{ID: 107}
+	err = store.WriteUser(&user3)
+
+	var user4 = model.User{ID: 108}
+	err = store.WriteUser(&user4)
+
+	var user5 = model.User{ID: 109}
+	err = store.WriteUser(&user5)
+
+	var user6 = model.User{ID: 110}
+	err = store.WriteUser(&user6)
+
+	var user7 = model.User{ID: 111}
+	err = store.WriteUser(&user7)
+
+	var user8 = model.User{ID: 112}
+	err = store.WriteUser(&user8)
+
+	var user9 = model.User{ID: 113}
+	err = store.WriteUser(&user9)
+
+	var user10 = model.User{ID: 114}
+	err = store.WriteUser(&user10)
+
+	var user11 = model.User{ID: 115}
+	err = store.WriteUser(&user11)
+
+	var user12 = model.User{ID: 116}
+	err = store.WriteUser(&user12)
+
+	var user13 = model.User{ID: 117}
+	err = store.WriteUser(&user13)
+
+	var user14 = model.User{ID: 118}
+	err = store.WriteUser(&user14)
+
+	var user15 = model.User{ID: 119}
+	err = store.WriteUser(&user15)
+
+	var user16 = model.User{ID: 120}
+	err = store.WriteUser(&user16)
+
+	err = store.CreateFollowConnection(user2.ID, user3.ID)
+	err = store.CreateFollowConnection(user3.ID, user2.ID)
+
+	if err != nil {
+		fmt.Println("Init database error")
+	}
+
+}
+
 func main() {
 	storeLogger := log.New(os.Stdout, "[person-store] ", log.LstdFlags)
 
-	// NoSQL: Initialize Movie Repository store
 	store, err := New(storeLogger)
 	if err != nil {
 		storeLogger.Fatal(err)
@@ -78,42 +142,11 @@ func main() {
 	defer store.CloseDriverConnection(context.Background())
 	store.CheckConnection()
 
-	var user1 = model.User{ID: 101}
-	err = store.WritePerson(&user1)
+	initDatabase(*store)
 
-	var user2 = model.User{ID: 102}
-	err = store.WritePerson(&user2)
+	userService := &service.UserService{UserRepo: store}
+	userHandler := &handler.UserHandler{UserService: userService}
 
-	var user3 = model.User{ID: 103}
-	err = store.WritePerson(&user3)
-
-	var user4 = model.User{ID: 104}
-	err = store.WritePerson(&user4)
-
-	var user5 = model.User{ID: 105}
-	err = store.WritePerson(&user5)
-
-	var user6 = model.User{ID: 106}
-	err = store.WritePerson(&user6)
-
-	var user7 = model.User{ID: 107}
-	err = store.WritePerson(&user7)
-
-	user, err := store.FindById(101)
-	if err != nil {
-		fmt.Println("Error")
-	}
-	fmt.Println("Created user id is %d", user.ID)
-
-	err = store.CreateFollowConnection(user1.ID, user2.ID)
-	err = store.CreateFollowConnection(user1.ID, user3.ID)
-	err = store.CreateFollowConnection(user2.ID, user4.ID)
-	err = store.CreateFollowConnection(user2.ID, user5.ID)
-	err = store.CreateFollowConnection(user3.ID, user7.ID)
-	err = store.CreateFollowConnection(user3.ID, user7.ID)
-	err = store.GetFollows(user1.ID)
-	err = store.GetSuggestionsForUser(user1.ID)
-
-	startServer()
+	startServer(userHandler)
 
 }
