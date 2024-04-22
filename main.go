@@ -37,10 +37,13 @@ func initializeNeo4j(ctx context.Context) (neo4j.DriverWithContext, error) {
 func startServer(userHandler *handler.UserHandler) {
 	router := mux.NewRouter().StrictSlash(true)
 
-	router.HandleFunc("/follower/get-follows/{id}", userHandler.GetFollows).Methods("GET")
-	router.HandleFunc("/follower/get-followers/{id}", userHandler.GetFollowers).Methods("GET")
-	router.HandleFunc("/follower/get-suggestions/{id}", userHandler.GetSuggestionsForUser).Methods("GET")
-	router.HandleFunc("/follower/follow-connection", userHandler.CreateFollowConnection).Methods("POST")
+	router.HandleFunc("/api/follower/get-user/{id}", userHandler.GetUserById).Methods("GET")
+	router.HandleFunc("/api/follower/get-follows/{id}", userHandler.GetFollows).Methods("GET")
+	router.HandleFunc("/api/follower/get-followers/{id}", userHandler.GetFollowers).Methods("GET")
+	router.HandleFunc("/api/follower/get-suggestions/{id}", userHandler.GetSuggestionsForUser).Methods("GET")
+	router.HandleFunc("/api/follower/follow-connection", userHandler.CreateFollowConnection).Methods("POST")
+	router.HandleFunc("/api/follower/delete-follow-connection", userHandler.DeleteFollowConnection).Methods("DELETE")
+	router.HandleFunc("/api/follower/check-following", userHandler.CheckIfFirstFollowSecond).Methods("GET")
 
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./static")))
 

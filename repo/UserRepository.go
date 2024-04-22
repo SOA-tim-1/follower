@@ -78,8 +78,44 @@ func (repo *UserRepository) FindById(id int64) (model.User, error) {
 		return model.User{}, err
 	}
 	//repo.Logger.Println(savedUser.(int64))
+	if savedUser == nil {
+		foundUser := model.User{ID: 0}
+		return foundUser, nil
+	}
 	foundUser := model.User{ID: savedUser.(int64)}
 	return foundUser, nil
+}
+
+func (repo *UserRepository) CheckIfFollowingConnectionExist(id1, id2 int64) (bool, error) {
+	ctx := context.Background()
+	session := repo.Driver.NewSession(ctx, neo4j.SessionConfig{DatabaseName: "neo4j"})
+	defer session.Close(ctx)
+
+	isConnected, err := session.ExecuteWrite(ctx,
+		func(transaction neo4j.ManagedTransaction) (any, error) {
+			result, err := transaction.Run(ctx,
+				"MATCH (a:User {id: $idOne})-[r:FOLLOW]->(b:User {id: $idTwo}) RETURN count(r) > 0",
+				map[string]any{"idOne": id1, "idTwo": id2})
+			if err != nil {
+				return nil, err
+			}
+
+			if result.Next(ctx) {
+				return result.Record().Values[0], nil
+			}
+
+			return nil, result.Err()
+		})
+	if err != nil {
+		repo.Logger.Println("Error checking if connection exist:", err)
+		return false, err
+	}
+	//repo.Logger.Println(savedUser.(int64))
+	if isConnected.(bool) {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 func (repo *UserRepository) CreateFollowConnection(firstId int64, secondId int64) error {
@@ -109,6 +145,34 @@ func (repo *UserRepository) CreateFollowConnection(firstId int64, secondId int64
 		return err
 	}
 	//repo.Logger.Println(savedPerson.(string))
+	return nil
+}
+
+func (repo *UserRepository) DeleteFollowConnection(firstId int64, secondId int64) error {
+	ctx := context.Background()
+	session := repo.Driver.NewSession(ctx, neo4j.SessionConfig{DatabaseName: "neo4j"})
+	defer session.Close(ctx)
+
+	_, err := session.ExecuteWrite(ctx,
+		func(transaction neo4j.ManagedTransaction) (interface{}, error) {
+			result, err := transaction.Run(ctx,
+				"MATCH (a:User)-[r:FOLLOW]->(b:User) WHERE a.id = $idOne AND b.id = $idTwo DELETE r",
+				map[string]interface{}{"idOne": firstId, "idTwo": secondId})
+			if err != nil {
+				return nil, err
+			}
+
+			if result.Next(ctx) {
+				return nil, nil // Successfully deleted
+			}
+
+			return nil, result.Err()
+		})
+	if err != nil {
+		repo.Logger.Println("Error deleting follow connection:", err)
+		return err
+	}
+
 	return nil
 }
 
@@ -281,7 +345,7 @@ func (repo UserRepository) GetRandomUsers() (*[]int64, error) {
 	_, err := session.ExecuteWrite(ctx,
 		func(transaction neo4j.ManagedTransaction) (interface{}, error) {
 			result, err := transaction.Run(ctx,
-				"MATCH (u:User) RETURN u.id LIMIT 10",
+				"MATCH (u:User) RETURN u.id LIMIT 5",
 				nil)
 			if err != nil {
 				return nil, err
