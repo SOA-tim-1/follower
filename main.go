@@ -128,6 +128,8 @@ func initDatabase(store repo.UserRepository) {
 
 	err = store.CreateFollowConnection(user2.ID, user3.ID)
 	err = store.CreateFollowConnection(user3.ID, user2.ID)
+	err = store.CreateFollowConnection(user3.ID, user5.ID)
+	err = store.CreateFollowConnection(user3.ID, user6.ID)
 
 	if err != nil {
 		fmt.Println("Init database error")
