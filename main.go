@@ -5,15 +5,21 @@ import (
 	"fmt"
 	"follower/handler"
 	"follower/model"
+	follower "follower/proto"
 	"follower/repo"
 	"follower/service"
 	"log"
+	"net"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 func initializeNeo4j(ctx context.Context) (neo4j.DriverWithContext, error) {
@@ -54,6 +60,40 @@ func startServer(userHandler *handler.UserHandler) {
 			handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE"}),
 			handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}),
 		)(router)))
+}
+
+func startServerGRPC(userHandlerGRPC *handler.UserHandlergRPC) {
+	listener, err := net.Listen("tcp", ":8092")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer func(listener net.Listener) {
+		err := listener.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(listener)
+
+	// Bootstrap gRPC server.
+	grpcServer := grpc.NewServer()
+	reflection.Register(grpcServer)
+
+	// Bootstrap gRPC service server and respond to request.
+	//userHandler := handlers.UserHandler{}
+	follower.RegisterUserServiceServer(grpcServer, userHandlerGRPC)
+
+	go func() {
+		if err := grpcServer.Serve(listener); err != nil {
+			log.Fatal("server error: ", err)
+		}
+	}()
+
+	stopCh := make(chan os.Signal)
+	signal.Notify(stopCh, syscall.SIGTERM)
+
+	<-stopCh
+
+	grpcServer.Stop()
 }
 
 func New(logger *log.Logger) (*repo.UserRepository, error) {
@@ -150,8 +190,9 @@ func main() {
 	initDatabase(*store)
 
 	userService := &service.UserService{UserRepo: store}
-	userHandler := &handler.UserHandler{UserService: userService}
+	//userHandler := &handler.UserHandler{UserService: userService}
+	userHandlerGRPC := &handler.UserHandlergRPC{UserService: userService}
 
-	startServer(userHandler)
+	startServerGRPC(userHandlerGRPC)
 
 }
