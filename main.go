@@ -23,9 +23,9 @@ import (
 )
 
 func initializeNeo4j(ctx context.Context) (neo4j.DriverWithContext, error) {
-	dbUri := "neo4j+s://15922f8a.databases.neo4j.io"
+	dbUri := "neo4j+s://703b857d.databases.neo4j.io"
 	dbUser := "neo4j"
-	dbPassword := "b_YTsWDnWRARx3s9-Tu0xncPu4bg9ws___PiTURovS8"
+	dbPassword := "1o-kKNHIenx6YKobq_4YidtHCDPxO9BmZqBLV07kqio"
 	driver, err := neo4j.NewDriverWithContext(
 		dbUri,
 		neo4j.BasicAuth(dbUser, dbPassword, ""))
@@ -97,9 +97,9 @@ func startServerGRPC(userHandlerGRPC *handler.UserHandlergRPC) {
 }
 
 func New(logger *log.Logger) (*repo.UserRepository, error) {
-	uri := "neo4j+s://15922f8a.databases.neo4j.io"
+	uri := "neo4j+s://703b857d.databases.neo4j.io"
 	user := "neo4j"
-	pass := "b_YTsWDnWRARx3s9-Tu0xncPu4bg9ws___PiTURovS8"
+	pass := "1o-kKNHIenx6YKobq_4YidtHCDPxO9BmZqBLV07kqio"
 	auth := neo4j.BasicAuth(user, pass, "")
 
 	driver, err := neo4j.NewDriverWithContext(uri, auth)
@@ -190,9 +190,11 @@ func main() {
 	initDatabase(*store)
 
 	userService := &service.UserService{UserRepo: store}
-	//userHandler := &handler.UserHandler{UserService: userService}
-	userHandlerGRPC := &handler.UserHandlergRPC{UserService: userService}
 
-	startServerGRPC(userHandlerGRPC)
+	// userHandler := &handler.UserHandler{UserService: userService}
+	// startServer(userHandler)
+
+	userHandlergRPC := &handler.UserHandlergRPC{UserService: userService}
+	startServerGRPC(userHandlergRPC)
 
 }

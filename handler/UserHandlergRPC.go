@@ -5,8 +5,7 @@ import (
 	"follower/dtos"
 	follower "follower/proto"
 	"follower/service"
-
-	"google.golang.org/grpc"
+	"log"
 )
 
 type UserHandlergRPC struct {
@@ -14,7 +13,7 @@ type UserHandlergRPC struct {
 	follower.UnimplementedUserServiceServer
 }
 
-func (handler *UserHandler) WriteUserRpc(ctx context.Context, in *follower.WriteUserRequest) (*follower.Empty, error) {
+func (handler *UserHandlergRPC) WriteUserRpc(ctx context.Context, in *follower.WriteUserRequest) (*follower.Empty, error) {
 
 	userDto := in.GetUserDto()
 	dto := dtos.UserDto{
@@ -29,7 +28,7 @@ func (handler *UserHandler) WriteUserRpc(ctx context.Context, in *follower.Write
 	return nil, error
 }
 
-func (handler *UserHandler) FindByIdRpc(ctx context.Context, in *follower.FindByIdRequest) (*follower.FindByIdResponse, error) {
+func (handler *UserHandlergRPC) FindByIdRpc(ctx context.Context, in *follower.FindByIdRequest) (*follower.FindByIdResponse, error) {
 
 	user, err := handler.UserService.FindById(in.GetId())
 	if err != nil {
@@ -47,7 +46,7 @@ func (handler *UserHandler) FindByIdRpc(ctx context.Context, in *follower.FindBy
 	return response, nil
 }
 
-func (handler *UserHandler) CreateFollowConnectionRpc(ctx context.Context, in *follower.CreateFollowConnectionRequest) (*follower.Empty, error) {
+func (handler *UserHandlergRPC) CreateFollowConnectionRpc(ctx context.Context, in *follower.CreateFollowConnectionRequest) (*follower.Empty, error) {
 
 	err := handler.UserService.CreateFollowConnection(in.GetFirstId(), in.GetSecondId())
 	if err != nil {
@@ -57,7 +56,7 @@ func (handler *UserHandler) CreateFollowConnectionRpc(ctx context.Context, in *f
 	return new(follower.Empty), nil
 }
 
-func (handler *UserHandler) GetFollowsRpc(ctx context.Context, in *follower.GetFollowsRequest, opts ...grpc.CallOption) (*follower.FollowsResponse, error) {
+func (handler *UserHandlergRPC) GetFollowsRpc(ctx context.Context, in *follower.GetFollowsRequest) (*follower.FollowsResponse, error) {
 
 	follows, err := handler.UserService.GetFollows(in.GetId())
 	if err != nil {
@@ -75,7 +74,7 @@ func (handler *UserHandler) GetFollowsRpc(ctx context.Context, in *follower.GetF
 	return response, nil
 }
 
-func (handler *UserHandler) GetFollowersRpc(ctx context.Context, in *follower.GetFollowersRequest) (*follower.FollowersResponse, error) {
+func (handler *UserHandlergRPC) GetFollowersRpc(ctx context.Context, in *follower.GetFollowersRequest) (*follower.FollowersResponse, error) {
 
 	followers, err := handler.UserService.GetFollowers(in.GetId())
 	if err != nil {
@@ -93,25 +92,36 @@ func (handler *UserHandler) GetFollowersRpc(ctx context.Context, in *follower.Ge
 	return response, nil
 }
 
-func (handler *UserHandler) GetSuggestionsForUserRpc(ctx context.Context, in *follower.GetSuggestionsRequest) (*follower.SuggestionsResponse, error) {
+func (handler *UserHandlergRPC) GetSuggestionsForUserRpc(ctx context.Context, in *follower.GetSuggestionsRequest) (*follower.SuggestionsResponse, error) {
 
 	suggestions, err := handler.UserService.GetSuggestionsForUser(in.GetId())
 	if err != nil {
 		return nil, err
 	}
 
+	log.Println("Suggestions from UserService:", *suggestions)
+
 	if len(*suggestions) == 0 {
 		return &follower.SuggestionsResponse{}, nil
 	}
 
+	int64Suggestions := make([]int64, len(*suggestions))
+	copy(int64Suggestions, *suggestions)
+
 	response := &follower.SuggestionsResponse{
-		Suggestions: *suggestions,
+		Suggestions: int64Suggestions,
 	}
+
+	// response := &follower.SuggestionsResponse{
+	// 	Suggestions: *suggestions,
+	// }
+
+	log.Println("Response from GetSuggestionsForUserRpc:", response)
 
 	return response, nil
 }
 
-func (handler *UserHandler) CheckIfFollowingConnectionExistRpc(ctx context.Context, in *follower.CheckIfFollowingConnectionExistRequest) (*follower.CheckResponse, error) {
+func (handler *UserHandlergRPC) CheckIfFollowingConnectionExistRpc(ctx context.Context, in *follower.CheckIfFollowingConnectionExistRequest) (*follower.CheckResponse, error) {
 
 	isFollowing, err := handler.UserService.CheckIfFollowingConnectionExist(in.GetId1(), in.GetId2())
 	if err != nil {
@@ -125,7 +135,7 @@ func (handler *UserHandler) CheckIfFollowingConnectionExistRpc(ctx context.Conte
 	return response, nil
 }
 
-func (handler *UserHandler) DeleteFollowConnectionRpc(ctx context.Context, in *follower.DeleteFollowConnectionRequest) (*follower.Empty, error) {
+func (handler *UserHandlergRPC) DeleteFollowConnectionRpc(ctx context.Context, in *follower.DeleteFollowConnectionRequest) (*follower.Empty, error) {
 
 	err := handler.UserService.DeleteFollowConnection(in.GetId1(), in.GetId2())
 	if err != nil {
