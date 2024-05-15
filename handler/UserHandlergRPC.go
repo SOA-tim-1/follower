@@ -48,7 +48,7 @@ func (handler *UserHandlergRPC) FindByIdRpc(ctx context.Context, in *follower.Fi
 
 func (handler *UserHandlergRPC) CreateFollowConnectionRpc(ctx context.Context, in *follower.CreateFollowConnectionRequest) (*follower.Empty, error) {
 
-	err := handler.UserService.CreateFollowConnection(in.GetFirstId(), in.GetSecondId())
+	err := handler.UserService.CreateFollowConnection(in.GetFollowingId(), in.GetFollowedId())
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,10 @@ func (handler *UserHandlergRPC) GetSuggestionsForUserRpc(ctx context.Context, in
 
 func (handler *UserHandlergRPC) CheckIfFollowingConnectionExistRpc(ctx context.Context, in *follower.CheckIfFollowingConnectionExistRequest) (*follower.CheckResponse, error) {
 
-	isFollowing, err := handler.UserService.CheckIfFollowingConnectionExist(in.GetId1(), in.GetId2())
+	log.Println("Following: ", in.GetFollowingId())
+	log.Println("Followed: ", in.GetFollowedId())
+
+	isFollowing, err := handler.UserService.CheckIfFollowingConnectionExist(in.GetFollowingId(), in.GetFollowedId())
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +140,7 @@ func (handler *UserHandlergRPC) CheckIfFollowingConnectionExistRpc(ctx context.C
 
 func (handler *UserHandlergRPC) DeleteFollowConnectionRpc(ctx context.Context, in *follower.DeleteFollowConnectionRequest) (*follower.Empty, error) {
 
-	err := handler.UserService.DeleteFollowConnection(in.GetId1(), in.GetId2())
+	err := handler.UserService.DeleteFollowConnection(in.GetFollowingId(), in.GetFollowedId())
 	if err != nil {
 		return nil, err
 	}
