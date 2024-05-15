@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"follower/dtos"
 	follower "follower/proto"
 	"follower/service"
@@ -10,7 +11,7 @@ import (
 
 type UserHandlergRPC struct {
 	UserService service.IUserService
-	follower.UnimplementedUserServiceServer
+	follower.UnimplementedFollowerServiceServer
 }
 
 func (handler *UserHandlergRPC) WriteUserRpc(ctx context.Context, in *follower.WriteUserRequest) (*follower.Empty, error) {
@@ -35,7 +36,7 @@ func (handler *UserHandlergRPC) FindByIdRpc(ctx context.Context, in *follower.Fi
 		return nil, err
 	}
 
-	userDto := &follower.UserDto{
+	userDto := &follower.FollowerDto{
 		Id: user.ID,
 	}
 
@@ -93,6 +94,16 @@ func (handler *UserHandlergRPC) GetFollowersRpc(ctx context.Context, in *followe
 }
 
 func (handler *UserHandlergRPC) GetSuggestionsForUserRpc(ctx context.Context, in *follower.GetSuggestionsRequest) (*follower.SuggestionsResponse, error) {
+
+	log.Println("Authorization Header:", ctx.Value("Authorization"))
+
+	authHeader, ok := ctx.Value("Authorization").(string)
+	if !ok {
+		return nil, errors.New("missing or invalid Authorization header")
+	}
+
+	// Logika za korišćenje authHeader vrednosti
+	log.Println("Authorization Header:", authHeader)
 
 	suggestions, err := handler.UserService.GetSuggestionsForUser(in.GetId())
 	if err != nil {

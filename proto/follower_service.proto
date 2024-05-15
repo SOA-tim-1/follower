@@ -3,11 +3,11 @@ syntax = "proto3";
 option go_package = "proto/follower";
 
 
-message UserDto {
+message FollowerDto {
   int64 id = 1;
 }
 
-service UserService {
+service FollowerService {
   rpc WriteUserRpc (WriteUserRequest) returns (Empty) {}
   rpc FindByIdRpc (FindByIdRequest) returns (FindByIdResponse) {}
   rpc CreateFollowConnectionRpc (CreateFollowConnectionRequest) returns (Empty) {}
@@ -20,11 +20,11 @@ service UserService {
 
 // Poruke zahteva i odgovora
 message WriteUserRequest{
-  UserDto userDto = 1;
+  FollowerDto userDto = 1;
 }
 
 message FindByIdResponse{
-  UserDto userDto = 1;
+  FollowerDto userDto = 1;
 }
 
 message Followers{

@@ -80,7 +80,7 @@ func startServerGRPC(userHandlerGRPC *handler.UserHandlergRPC) {
 
 	// Bootstrap gRPC service server and respond to request.
 	//userHandler := handlers.UserHandler{}
-	follower.RegisterUserServiceServer(grpcServer, userHandlerGRPC)
+	follower.RegisterFollowerServiceServer(grpcServer, userHandlerGRPC)
 
 	go func() {
 		if err := grpcServer.Serve(listener); err != nil {
